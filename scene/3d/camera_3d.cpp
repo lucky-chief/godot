@@ -54,6 +54,9 @@ void Camera3D::_update_camera_mode() {
 		case PROJECTION_FRUSTUM: {
 			set_frustum(size, frustum_offset, _near, _far);
 		} break;
+		case PROJECTION_CUSTOM: {
+			RenderingServer::get_singleton()->camera_set_projection(camera, custom_projection);
+		} break;
 	}
 }
 
@@ -69,6 +72,10 @@ void Camera3D::_validate_property(PropertyInfo &p_property) const {
 	} else if (p_property.name == "frustum_offset") {
 		if (mode != PROJECTION_FRUSTUM) {
 			p_property.usage = PROPERTY_USAGE_NO_EDITOR;
+		}
+	} else if (p_property.name == "near" || p_property.name == "far") {
+		if (mode == PROJECTION_CUSTOM) {
+			p_property.usage = PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_INTERNAL | PROPERTY_USAGE_EDITOR;
 		}
 	}
 
@@ -297,6 +304,10 @@ Transform3D Camera3D::get_camera_transform() const {
 }
 
 Projection Camera3D::_get_camera_projection(real_t p_near) const {
+	if (mode == PROJECTION_CUSTOM) {
+		return custom_projection;
+	}
+
 	Size2 viewport_size = get_viewport()->get_visible_rect().size;
 	Projection cm;
 
@@ -309,6 +320,9 @@ Projection Camera3D::_get_camera_projection(real_t p_near) const {
 		} break;
 		case PROJECTION_FRUSTUM: {
 			cm.set_frustum(size, viewport_size.aspect(), frustum_offset, p_near, _far);
+		} break;
+		case PROJECTION_CUSTOM: {
+			// This case is handled at the beginning of the function
 		} break;
 	}
 
@@ -369,7 +383,7 @@ void Camera3D::set_frustum(real_t p_size, Vector2 p_offset, real_t p_z_near, rea
 }
 
 void Camera3D::set_projection(ProjectionType p_mode) {
-	if (p_mode == PROJECTION_PERSPECTIVE || p_mode == PROJECTION_ORTHOGONAL || p_mode == PROJECTION_FRUSTUM) {
+	if (p_mode == PROJECTION_PERSPECTIVE || p_mode == PROJECTION_ORTHOGONAL || p_mode == PROJECTION_FRUSTUM || p_mode == PROJECTION_CUSTOM) {
 		mode = p_mode;
 		_update_camera_mode();
 		notify_property_list_changed();
@@ -672,6 +686,9 @@ void Camera3D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_near", "near"), &Camera3D::set_near);
 	ClassDB::bind_method(D_METHOD("get_projection"), &Camera3D::get_projection);
 	ClassDB::bind_method(D_METHOD("set_projection", "mode"), &Camera3D::set_projection);
+	ClassDB::bind_method(D_METHOD("set_projection_matrix", "projection"), static_cast<void (Camera3D::*)(const Projection &)>(&Camera3D::set_projection_matrix));
+	ClassDB::bind_method(D_METHOD("set_projection_matrix_with_planes", "projection", "z_near", "z_far"), static_cast<void (Camera3D::*)(const Projection &, real_t, real_t)>(&Camera3D::set_projection_matrix));
+	ClassDB::bind_method(D_METHOD("get_projection_matrix"), &Camera3D::get_projection_matrix);
 	ClassDB::bind_method(D_METHOD("set_h_offset", "offset"), &Camera3D::set_h_offset);
 	ClassDB::bind_method(D_METHOD("get_h_offset"), &Camera3D::get_h_offset);
 	ClassDB::bind_method(D_METHOD("set_v_offset", "offset"), &Camera3D::set_v_offset);
@@ -717,6 +734,7 @@ void Camera3D::_bind_methods() {
 	BIND_ENUM_CONSTANT(PROJECTION_PERSPECTIVE);
 	BIND_ENUM_CONSTANT(PROJECTION_ORTHOGONAL);
 	BIND_ENUM_CONSTANT(PROJECTION_FRUSTUM);
+	BIND_ENUM_CONSTANT(PROJECTION_CUSTOM);
 
 	BIND_ENUM_CONSTANT(KEEP_WIDTH);
 	BIND_ENUM_CONSTANT(KEEP_HEIGHT);
@@ -880,6 +898,30 @@ RID Camera3D::get_pyramid_shape_rid() {
 	}
 
 	return pyramid_shape;
+}
+
+void Camera3D::set_projection_matrix(const Projection &p_projection) {
+	custom_projection = p_projection;
+	mode = PROJECTION_CUSTOM;
+	_update_camera_mode();
+	notify_property_list_changed();
+}
+
+void Camera3D::set_projection_matrix(const Projection &p_projection, real_t p_z_near, real_t p_z_far) {
+	custom_projection = p_projection;
+	_near = p_z_near;
+	_far = p_z_far;
+	mode = PROJECTION_CUSTOM;
+	_update_camera_mode();
+	notify_property_list_changed();
+}
+
+Projection Camera3D::get_projection_matrix() const {
+	if (mode == PROJECTION_CUSTOM) {
+		return custom_projection;
+	} else {
+		return get_camera_projection();
+	}
 }
 
 Camera3D::Camera3D() {

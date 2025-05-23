@@ -79,7 +79,8 @@ public:
 		enum Type {
 			PERSPECTIVE,
 			ORTHOGONAL,
-			FRUSTUM
+			FRUSTUM,
+			CUSTOM
 		};
 		Type type;
 		float fov;
@@ -91,6 +92,9 @@ public:
 		RID env;
 		RID attributes;
 		RID compositor;
+
+		// Custom projection matrix
+		Projection custom_projection;
 
 		Transform3D transform;
 
@@ -114,6 +118,7 @@ public:
 	virtual void camera_set_perspective(RID p_camera, float p_fovy_degrees, float p_z_near, float p_z_far);
 	virtual void camera_set_orthogonal(RID p_camera, float p_size, float p_z_near, float p_z_far);
 	virtual void camera_set_frustum(RID p_camera, float p_size, Vector2 p_offset, float p_z_near, float p_z_far);
+	virtual void camera_set_projection(RID p_camera, const Projection &p_projection);
 	virtual void camera_set_transform(RID p_camera, const Transform3D &p_transform);
 	virtual void camera_set_cull_mask(RID p_camera, uint32_t p_layers);
 	virtual void camera_set_environment(RID p_camera, RID p_env);

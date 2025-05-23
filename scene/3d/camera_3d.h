@@ -44,7 +44,8 @@ public:
 	enum ProjectionType {
 		PROJECTION_PERSPECTIVE,
 		PROJECTION_ORTHOGONAL,
-		PROJECTION_FRUSTUM
+		PROJECTION_FRUSTUM,
+		PROJECTION_CUSTOM
 	};
 
 	enum KeepAspect {
@@ -74,6 +75,9 @@ private:
 	real_t v_offset = 0.0;
 	real_t h_offset = 0.0;
 	KeepAspect keep_aspect = KEEP_HEIGHT;
+
+	// Custom projection matrix
+	Projection custom_projection;
 
 	RID camera;
 	RID scenario_id;
@@ -219,6 +223,11 @@ public:
 	Vector3 get_doppler_tracked_velocity() const;
 
 	RID get_pyramid_shape_rid();
+
+	// Custom projection matrix methods
+	void set_projection_matrix(const Projection &p_projection);
+	void set_projection_matrix(const Projection &p_projection, real_t p_z_near, real_t p_z_far);
+	Projection get_projection_matrix() const;
 
 	Camera3D();
 	~Camera3D();
