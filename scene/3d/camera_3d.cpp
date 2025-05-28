@@ -687,7 +687,7 @@ void Camera3D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_projection"), &Camera3D::get_projection);
 	ClassDB::bind_method(D_METHOD("set_projection", "mode"), &Camera3D::set_projection);
 	ClassDB::bind_method(D_METHOD("set_projection_matrix", "projection"), static_cast<void (Camera3D::*)(const Projection &)>(&Camera3D::set_projection_matrix));
-	ClassDB::bind_method(D_METHOD("set_projection_matrix_with_planes", "projection", "z_near", "z_far"), static_cast<void (Camera3D::*)(const Projection &, real_t, real_t)>(&Camera3D::set_projection_matrix));
+	ClassDB::bind_method(D_METHOD("set_projection_matrix_with_planes", "projection", "z_near", "z_far"), &Camera3D::set_projection_matrix_with_planes);
 	ClassDB::bind_method(D_METHOD("get_projection_matrix"), &Camera3D::get_projection_matrix);
 	ClassDB::bind_method(D_METHOD("set_h_offset", "offset"), &Camera3D::set_h_offset);
 	ClassDB::bind_method(D_METHOD("get_h_offset"), &Camera3D::get_h_offset);
@@ -902,12 +902,24 @@ RID Camera3D::get_pyramid_shape_rid() {
 
 void Camera3D::set_projection_matrix(const Projection &p_projection) {
 	custom_projection = p_projection;
+	// 从投影矩阵中提取 near 和 far 值
+	_near = p_projection.get_z_near();
+	_far = p_projection.get_z_far();
 	mode = PROJECTION_CUSTOM;
 	_update_camera_mode();
 	notify_property_list_changed();
 }
 
 void Camera3D::set_projection_matrix(const Projection &p_projection, real_t p_z_near, real_t p_z_far) {
+	custom_projection = p_projection;
+	_near = p_z_near;
+	_far = p_z_far;
+	mode = PROJECTION_CUSTOM;
+	_update_camera_mode();
+	notify_property_list_changed();
+}
+
+void Camera3D::set_projection_matrix_with_planes(const Projection &p_projection, real_t p_z_near, real_t p_z_far) {
 	custom_projection = p_projection;
 	_near = p_z_near;
 	_far = p_z_far;

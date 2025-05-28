@@ -227,6 +227,7 @@ public:
 	// Custom projection matrix methods
 	void set_projection_matrix(const Projection &p_projection);
 	void set_projection_matrix(const Projection &p_projection, real_t p_z_near, real_t p_z_far);
+	void set_projection_matrix_with_planes(const Projection &p_projection, real_t p_z_near, real_t p_z_far);
 	Projection get_projection_matrix() const;
 
 	Camera3D();
